@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Planar Spring Test</title>
+    <style>
+        body { margin: 0; background-color: #111; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- 1. Your Three.js Function ---
+        function createPlanarSpring(params) {
+    const {
+        thickness,    // Z-height (extrusion)
+        id,           // Inner Diameter
+        od,           // Outer Diameter
+        numSprings,   // Number of legs
+        beamWidth,    // Width of the spring material
+        serpentineNum, // Number of "zigs"
+        clockwise = false
+    } = params;
+
+    const group = new THREE.Group();
+    const directionMult = clockwise ? -1 : 1;
+    
+    // Logic for auto-calculating winding spacing based on the original OpenSCAD logic
+    const distEach = (od - id) / (serpentineNum + 1);
+    const apertureRad = (Math.PI * 0.8) / numSprings; // Reduced to prevent leg collisions
+
+    for (let i = 0; i < numSprings; i++) {
+        const baseAngle = i * (Math.PI * 2 / numSprings);
+        const shape = new THREE.Shape();
+
+        // 1. Draw the "Outer Edge" of the serpentine beam
+        for (let j = 0; j <= serpentineNum; j++) {
+            const r = (id / 2) + (j * distEach / 2) + (beamWidth / 2);
+            const isEven = j % 2 === 0;
+            const startA = baseAngle - (apertureRad / 2);
+            const endA = baseAngle + (apertureRad / 2);
+
+            if (isEven) {
+                shape.absarc(0, 0, r, startA, endA, false);
+            } else {
+                shape.absarc(0, 0, r, endA, startA, true);
+            }
+        }
+
+        // 2. Draw the "Inner Edge" to create the beam thickness
+        // We travel back from Outer Diameter to Inner Diameter
+        for (let j = serpentineNum; j >= 0; j--) {
+            const r = (id / 2) + (j * distEach / 2) - (beamWidth / 2);
+            const isEven = j % 2 === 0;
+            const startA = baseAngle - (apertureRad / 2);
+            const endA = baseAngle + (apertureRad / 2);
+
+            if (isEven) {
+                shape.absarc(0, 0, r, endA, startA, true);
+            } else {
+                shape.absarc(0, 0, r, startA, endA, false);
+            }
+        }
+
+        const extrudeSettings = { 
+            depth: thickness, 
+            bevelEnabled: false, 
+            curveSegments: 32 // Higher value for smoother OpenSCAD-like curves
+        };
+
+        const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        const material = new THREE.MeshStandardMaterial({ 
+            color: 0x00ffcc, 
+            wireframe: false 
+        });
+        
+        group.add(new THREE.Mesh(geometry, material));
+    }
+    return group;
+}
+
+        // --- 2. Scene Setup ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Add Lights
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(5, 5, 10);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040));
+
+        // --- 3. Add the Spring ---
+        const spring = createPlanarSpring({
+            thickness: 2,
+            length: 50,
+            id: 20,
+            od: 80,
+            numSprings: 3
+        });
+        scene.add(spring);
+
+        camera.position.z = 100;
+        const controls = new OrbitControls(camera, renderer.domElement);
+
+        // --- 4. Animation Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
