@@ -1,6 +1,8 @@
 import * as THREE from "three";
 // need renderer, camera, scene
 import {OrbitControls} from "jsm/controls/OrbitControls.js";
+import { STLExporter } from 'jsm/exporters/STLExporter.js';
+import { GUI } from 'jsm/libs/lil-gui.module.min.js';
 
 const w = window.innerWidth;
 const h = window.innerHeight;
@@ -49,6 +51,59 @@ let [springLegBasedOffSkeleton, lineSkele] = createSpringLegBasedOffSkeleton(spr
 let [springLegWithRadialThickness,lineRadial] = createSpringLegWithRadialThickness(springParamsB, Math.PI/2);
 scene.add(springLegWithRadialThickness);
 scene.add(lineRadial);
+
+const exporter = new STLExporter();
+const data = exporter.parse(springLegWithRadialThickness);
+
+const link = document.createElement( 'a' );
+			link.style.display = 'none';
+			document.body.appendChild( link );
+// saveArrayBuffer( data, 'spring.stl' );
+
+addGUI();
+function addGUI(){
+    const params = {
+				asdf: exportASCIIa,
+				exportBinary: exportBinary
+			};
+    const gui = new GUI();
+    gui.add( params, 'asdf' ).name( 'Export STL (ASCII)' );
+    gui.add( params, 'exportBinary' ).name( 'Export STL (Binary)' );
+    gui.open();
+}
+
+function exportASCIIa() {
+
+				const result = exporter.parse( springLegWithRadialThickness );
+				saveString( result, 'box.stl' );
+
+			}
+
+function saveString( text, filename ) {
+
+    save( new Blob( [ text ], { type: 'text/plain' } ), filename );
+
+}
+function exportBinary() {
+
+				const result = exporter.parse( springLegWithRadialThickness, { binary: true } );
+				saveArrayBuffer( result, 'box.stl' );
+
+			}
+function save( blob, filename ) {
+
+				link.href = URL.createObjectURL( blob );
+				link.download = filename;
+				link.click();
+
+			}
+
+function saveArrayBuffer( buffer, filename ) {
+
+				save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+
+			}
+
 
 let springLeg = createSpringLeg(innerDiameter, outerDiameter, beamWidth, thickness, springParamsB, Math.PI/2);
 // scene.add(springLeg);
