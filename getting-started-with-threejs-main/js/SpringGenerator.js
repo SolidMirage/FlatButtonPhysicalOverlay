@@ -1,140 +1,47 @@
 import * as THREE from "three";
-// need renderer, camera, scene
-import {OrbitControls} from "jsm/controls/OrbitControls.js";
-import { STLExporter } from 'jsm/exporters/STLExporter.js';
-import { GUI } from 'jsm/libs/lil-gui.module.min.js';
 
-const w = window.innerWidth;
-const h = window.innerHeight;
-const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(w, h);
-document.body.appendChild(renderer.domElement);
-
-const fov = 75;
-const aspect = w / h;
-const near = 0.1;
-const far = 100;
-const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-camera.position.z = 40;
-
-const scene = new THREE.Scene();
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor= .9;
-
-const hemiLight = new THREE.HemisphereLight(0x0099ff, 0xaa5500);
-scene.add(hemiLight);
-
-const light = new THREE.AmbientLight(0x404040);
-scene.add(light);
-
-createCenterMesh();
-// createRandomCircle();
-let innerDiameter = 10;
-let outerDiameter = 40;
-let thickness = 0.5;
-let length = 68;
-let numSprings = 3;
-let beamWidth = 1
-// scene.add(createMountingHubs(innerDiameter, outerDiameter, thickness));
-let springParamsA = calculateSpringParams(innerDiameter, outerDiameter, length, numSprings);
-console.log(springParamsA);
-let springParamsB = {id: innerDiameter, od: outerDiameter, beamWidth, thickness, ...springParamsA}
-let [springLegWithRadialThickness,lineRadial] = createSpringLegWithRadialThickness(springParamsB, Math.PI/2);
-scene.add(springLegWithRadialThickness);
-scene.add(lineRadial);
-
-const exporter = new STLExporter();
-const data = exporter.parse(springLegWithRadialThickness);
-
-const link = document.createElement( 'a' );
-			link.style.display = 'none';
-			document.body.appendChild( link );
-// saveArrayBuffer( data, 'spring.stl' );
-
-addGUI();
-function addGUI(){
-    const params = {
-				exportASCII: exportASCII,
-				exportBinary: exportBinary
-			};
-    const gui = new GUI();
-    gui.add( params, 'exportASCII' ).name( 'Export STL (ASCII)' );
-    gui.add( params, 'exportBinary' ).name( 'Export STL (Binary)' );
-    gui.open();
-}
-
-function exportASCII() {
-
-    const result = exporter.parse( springLegWithRadialThickness );
-    saveString( result, 'box.stl' );
-
-}
-
-function saveString( text, filename ) {
-
-    save( new Blob( [ text ], { type: 'text/plain' } ), filename );
-
-}
-function exportBinary() {
-
-    const result = exporter.parse( springLegWithRadialThickness, { binary: true } );
-    saveArrayBuffer( result, 'box.stl' );
-
-}
-function save( blob, filename ) {
-
-    link.href = URL.createObjectURL( blob );
-    link.download = filename;
-    link.click();
-
-}
-
-function saveArrayBuffer( buffer, filename ) {
-
-    save( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
-
-}
-
-
-function createCenterMesh() {
-    const geo = new THREE.IcosahedronGeometry(.5,2);
-    const mat = new THREE.MeshStandardMaterial({
-        color:0xffffff,
-        flatShading: true
-    });
-    const mesh = new THREE.Mesh(geo, mat);
-    scene.add(mesh);
-
-    const wireMat = new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        wireframe:true
-    });
-    const wireMesh = new THREE.Mesh(geo, wireMat);
-    scene.add(wireMesh);
-    wireMesh.scale.setScalar(1.0001);
-    mesh.add(wireMesh);
-}
-
-function createMountingHubs(id, od, thickness) {
-    const shape = new THREE.Shape();
+export function createMountingHubs(params) {
+    const {id, od, thickness, widthSpacer, heightSpacer, beamWidth,serpentineNum} = params;
+    const innerPad = new THREE.Shape();
     // Outer circle of the hub assembly
-    shape.absarc(0, 0, od / 2 + 5, 0, Math.PI * 2, false); 
+    innerPad.absarc(0, 0, id / 2, 0, Math.PI * 2, false); 
 
+    const outerPad = new THREE.Shape();
+    outerPad.absarc(0, 0, od / 2+ widthSpacer, 0, Math.PI * 2, false); 
     // Inner mounting hole
     const holePath = new THREE.Path();
-    holePath.absarc(0, 0, id / 2, 0, Math.PI * 2, true);
-    shape.holes.push(holePath);
+    // const isEven = serpentineNum % 2 === 0;
+    const holeRadius = od/2;
+    holePath.moveTo(0,0);
+    holePath.absarc(0, 0, holeRadius, 0, Math.PI * 2, true);
+    outerPad.holes.push(holePath);
 
-    const mountingGeometry = new THREE.ExtrudeGeometry(shape, { depth: thickness, bevelEnabled: false });
+    const outerSpacer = new THREE.Shape();
+    outerSpacer.absarc(0,0,od/2+widthSpacer,0,Math.PI*2,false);
+    const outerSpacerHole = new THREE.Shape();
+    outerSpacerHole.absarc(0,0,od/2,0,Math.PI*2,true);
+    outerSpacer.holes.push(outerSpacerHole);
+
+    const innerGeo = new THREE.ExtrudeGeometry(innerPad, { depth: thickness, bevelEnabled: false });
+    const outerGeo = new THREE.ExtrudeGeometry(outerPad, { depth: thickness, bevelEnabled: false });
+    const outerSpacerGeo = new THREE.ExtrudeGeometry(outerSpacer, { depth: heightSpacer, bevelEnabled: false });
+
+
+    const mountingGroup = new THREE.Group();
+    // const mountingGeometry = new THREE.ExtrudeGeometry(shape, { depth: thickness, bevelEnabled: false });
     const mountingMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, flatShading: true});
-    const mountingMesh = new THREE.Mesh(mountingGeometry, mountingMaterial);
-    return mountingMesh;
+    const innerMesh = new THREE.Mesh(innerGeo, mountingMaterial);
+    const outerMesh = new THREE.Mesh(outerGeo, mountingMaterial); 
+    const outerSpacerMesh = new THREE.Mesh(outerSpacerGeo, mountingMaterial); 
+    mountingGroup.add(innerMesh);
+    mountingGroup.add(outerMesh);
+    mountingGroup.add(outerSpacerMesh);
+
+    return mountingGroup;
 }
 // Verification: You should see a solid ring with a hole in the center.
 
-function calculateSpringParams(id, od, length, numSprings) {
+export function calculateSpringParams(id, od, length, numSprings) {
     // The radial length of the circle that will be filled with 'stuff'
     const radialSpan = (od - id) / 2;
 
@@ -162,7 +69,7 @@ function calculateSpringParams(id, od, length, numSprings) {
 }
 // Verification: console.log these values to ensure serpentineNum isn't 0 or excessively high.
 
-function createSpringLegWithRadialThickness(params, baseAngle) {
+export function createSpringLegWithRadialThickness(params, baseAngle) {
     const { id, od, beamWidth, thickness, serpentineNum, distEach, apertureLimit } = params;
     const shape = new THREE.Shape();
 
@@ -172,6 +79,13 @@ function createSpringLegWithRadialThickness(params, baseAngle) {
 
     // Helper: Convert linear width to angular offset at radius r
     const getAWidthOff = (r) => (beamWidth / r);
+
+    // --- STEP 0: START TAB (Inner) ---
+    const startR = id / 2;
+    const startTabR = startR - beamWidth;
+    shape.moveTo(Math.cos(leftWallA) * startTabR, Math.sin(leftWallA) * startTabR);
+    shape.lineTo(Math.cos(leftWallA - getAWidthOff(startTabR)) * startTabR, Math.sin(leftWallA - getAWidthOff(startTabR)) * startTabR);
+    shape.lineTo(Math.cos(leftWallA - getAWidthOff(startR)) * startR, Math.sin(leftWallA - getAWidthOff(startR)) * startR);
 
     // --- STEP 1: TRACE THE Right-most PERIMETER (Inner radius to Outer radius) ---
     // This traces the "outermost" boundary relative to the center of the beam path
@@ -184,8 +98,6 @@ function createSpringLegWithRadialThickness(params, baseAngle) {
         // To prevent overlap, we ensure the arc starts/ends exactly where the radial link meets it
         const arcStart = isEven ? (leftWallA - aWidthOff) : (rightWallA);
         const arcEnd   = isEven ? (rightWallA) : (leftWallA - aWidthOff);
-
-        if (j === 0) shape.moveTo(Math.cos(leftWallA) * r, Math.sin(leftWallA) * r);
 
         shape.absarc(0, 0, r, arcStart, arcEnd, isEven);
 
@@ -200,12 +112,18 @@ function createSpringLegWithRadialThickness(params, baseAngle) {
     }
 
     // --- STEP 2: TOP END-CAP (Bridge Outer to Inner) ---
-    const sEven = (serpentineNum % 2 === 0);
-    const topR = (id / 2) + (serpentineNum * distEach) + (sEven ? beamWidth:0);
-    // const topR_B = (id / 2) + (serpentineNum * distEach) + (sEven ? beamWidth : 0);
-    const topStartAngle = !sEven ? (leftWallA - getAWidthOff(topR)) : (rightWallA);
-    // const capAngleInner = sEven ? (rightWallA + getAWidthOff(topR_B)) : (leftWallA - getAWidthOff(topR_B));
-    shape.lineTo(Math.cos(topStartAngle) * topR, Math.sin(topStartAngle) * topR);
+    // const sEven = (serpentineNum % 2 === 0);
+    // const topR = (id / 2) + (serpentineNum * distEach) + (sEven ? beamWidth : 0);
+    // const topStartAngle = !sEven ? (leftWallA) : (rightWallA);
+    
+    // // End Tab (Outer)
+    // const endTabR = topR + (sEven?0:beamWidth);
+    // const tabAngle = sEven ? rightWallA : leftWallA;
+    // shape.lineTo(Math.cos(topStartAngle) * topR, Math.sin(topStartAngle) * topR);
+    // shape.lineTo(Math.cos(tabAngle) * topR, Math.sin(tabAngle) * topR);
+    // shape.lineTo(Math.cos(tabAngle) * endTabR, Math.sin(tabAngle) * endTabR);
+    // shape.lineTo(Math.cos(tabAngle + (sEven ? getAWidthOff(endTabR) : -getAWidthOff(endTabR))) * endTabR, Math.sin(tabAngle + (sEven ? getAWidthOff(endTabR) : -getAWidthOff(endTabR))) * endTabR);
+    // shape.lineTo(Math.cos(topStartAngle + (sEven ? getAWidthOff(topR) : -getAWidthOff(topR))) * topR, Math.sin(topStartAngle + (sEven ? getAWidthOff(topR) : -getAWidthOff(topR))) * topR);
 
     // --- STEP 3: TRACE THE INNER PERIMETER (Outer to Inner) ---
     for (let j = serpentineNum; j >= 0; j--) {
@@ -257,11 +175,42 @@ function createSpringLegWithRadialThickness(params, baseAngle) {
         linewidth: 2 
     });
 
+    const springMaterial = new THREE.MeshStandardMaterial({ color: 0x00ffcc });
+
+    const springMesh = new THREE.Mesh(geometry, springMaterial);
+
+    const outerTabShape = new THREE.Shape();
+    // create tabs to go from end of spring to an outer item
+    // tab will start at outermost radius and outermost arc
+    const tabRadiusStart = (id / 2) + (serpentineNum * distEach);
+    const isEven = serpentineNum % 2 === 0;
+    const tabRadiusEnd = tabRadiusStart + (beamWidth * (isEven ? 2.1 : 3.1));
+    
+    const outerMostArc = isEven ? rightWallA : leftWallA;
+    const innerTabArcEnd = isEven ? (rightWallA + getAWidthOff(tabRadiusStart)) : (leftWallA - getAWidthOff(tabRadiusStart));
+    outerTabShape.moveTo(Math.cos(outerMostArc) * tabRadiusStart, Math.sin(outerMostArc) * tabRadiusStart);
+    outerTabShape.lineTo(Math.cos(outerMostArc) * (tabRadiusEnd), Math.sin(outerMostArc) * (tabRadiusEnd));
+    outerTabShape.absarc(0, 0, tabRadiusEnd, outerMostArc, innerTabArcEnd, !isEven);
+    outerTabShape.lineTo(Math.cos(innerTabArcEnd) * (tabRadiusStart), Math.sin(innerTabArcEnd) * (tabRadiusStart));
+    outerTabShape.closePath();
+    // extend up on same arc twice the beamwidth to get one beamwidth past the end of the spring
+    // create arc from that spot to one arc-length beam width to the inside of the spring
+    // extend on that angle down to the first radius
+    const outerTabGeometry = new THREE.ExtrudeGeometry(outerTabShape, { 
+        depth: thickness, 
+        bevelEnabled: false, 
+        curveSegments: 32 
+    });
+
+    const outerTabMesh = new THREE.Mesh(outerTabGeometry, springMaterial);
+    springMesh.add(outerTabMesh);
+    // springMesh.add(new THREE.Mesh(new THREE.ExtrudeGeometry(outerTabShape, { depth: thickness, bevelEnabled: false }), new THREE.MeshStandardMaterial({ color: 0x00ffcc })));
+
     // return new THREE.Line(geometry, material);
-    return [new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0x00ffcc })), new THREE.Line(geoLine, matLine)];
+    return [springMesh, new THREE.Line(geoLine, matLine)];
 }
 
-function createSpringSkeletonAbsArc(id, od, params, baseAngle) {
+export function createSpringSkeletonAbsArc(id, od, params, baseAngle) {
     const { serpentineNum, distEach, apertureLimit } = params;
     
     // We use a Path to store the continuous line
@@ -299,7 +248,7 @@ function createSpringSkeletonAbsArc(id, od, params, baseAngle) {
     return new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0xffffff }));
 }
 
-function createSpringSkeleton(id, od, params, baseAngle) {
+export function createSpringSkeleton(id, od, params, baseAngle) {
     const points = [];
     // number of arms
     // space between arms and the center
@@ -333,14 +282,31 @@ function createSpringSkeleton(id, od, params, baseAngle) {
     return new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0xffffff }));
 }
 
+/**
+ * Creates the full assembly of multiple spring legs.
+ */
+export function createFullSpringAssembly(params) {
+    const { numSprings } = params;
+    const assemblyGroup = new THREE.Group();
 
+    // Calculate the parameters once for all legs
+    
+    const springParamsA = calculateSpringParams(params.id, params.od, params.length, numSprings);
+    let springParamsB = {id: params.id, od: params.od, beamWidth:params.beamWidth, thickness:params.thickness, ...springParamsA, numSprings: numSprings};
 
-function animate(t=0) {
-    requestAnimationFrame(animate);
-    // mesh.scale.setScalar(Math.cos(t*0.001)+1.0);
-    // mesh.rotation.y = t*0.0001;
-    renderer.render(scene, camera);
-    controls.update();
+    for (let i = 0; i < numSprings; i++) {
+        // Option A: Pass the baseAngle directly to your function
+        const baseAngle = i * (Math.PI * 2 / numSprings);
+        const [legMesh,]= createSpringLegWithRadialThickness(springParamsB, baseAngle);
+        
+        /* OR Option B: Generate one leg at angle 0 and rotate the mesh:
+        const legMesh = createSpringLegWithRadialThickness(springParams, 0);
+        legMesh.rotation.z = i * (Math.PI * 2 / numSprings);
+        */
+
+        assemblyGroup.add(legMesh);
+    }
+    // console.log(assemblyGroup);
+
+    return assemblyGroup;
 }
-
-animate();
