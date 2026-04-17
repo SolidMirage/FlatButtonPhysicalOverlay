@@ -32,6 +32,8 @@ camera.position.z = 40;
 // camera.rotation.z = Math.PI * 0.5;
 
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xaaaaaa);
+
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
@@ -40,7 +42,7 @@ controls.dampingFactor= .9;
 const hemiLight = new THREE.HemisphereLight(0x0099ff, 0xaa5500);
 scene.add(hemiLight);
 
-const light = new THREE.AmbientLight(0x404040);
+const light = new THREE.AmbientLight(0xaaaaaa);
 scene.add(light);
 
 // addRadialSpring();
