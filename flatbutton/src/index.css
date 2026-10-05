@@ -11,14 +11,52 @@
 
 body {
   margin: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  font-family: system-ui, sans-serif;
   min-width: 320px;
-  min-height: 100svh;
+  height: 100svh;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+}
+
+#wrapper {
+  display: flex;
+  gap: 1rem;
+  box-sizing: border-box;
+  height: 100%;
+  padding: 1rem;
+}
+
+/* Der Viewer nimmt allen übrigen Platz, die Seitenleiste nur so viel, wie ihr Inhalt braucht */
+flatbutton-viewer {
+  flex: 1;
+  min-width: 0;
+}
+
+aside {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+}
+
+/* Platz reservieren, solange die Custom Elements noch nicht definiert sind, damit beim Laden nichts springt (FOUCE) */
+flatbutton-viewer:not(:defined) {
+  display: block;
+  background: #f0f0ee;
+}
+
+edit-panel:not(:defined) {
+  display: block;
+  width: 300px;
+  min-height: 340px;
+}
+
+export-panel:not(:defined) {
+  display: block;
+  width: 300px;
+  height: 44px;
 }

@@ -3,14 +3,39 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width" />
     <title>flatbutton</title>
     <link rel="stylesheet" href="./src/index.css" />
-    <script type="module" src="/src/my-element.ts"></script>
+    <meta name="author" content="Tony Spegel" />
+    <meta name="copyright" content="SolidMirage & Tony Spegel" />
+    <script
+      type="module"
+      src="/src/components/edit-panel/edit-panel.ts"
+    ></script>
+    <script
+      type="module"
+      src="/src/components/flatbutton-viewer/flatbutton-viewer.ts"
+    ></script>
+    <script
+      type="module"
+      src="/src/components/export-panel/export-panel.ts"
+    ></script>
+    <script
+      type="module"
+      src="/src/components/shape-playground/shape-playground.ts"
+    ></script>
   </head>
   <body>
-    <my-element>
-      <h1>Get started</h1>
-    </my-element>
+    <!-- <div id="wrapper">
+      <flatbutton-viewer></flatbutton-viewer>
+      <aside>
+        <edit-panel></edit-panel>
+        <export-panel></export-panel>
+      </aside>
+    </div>
+
+    <hr />
+    <h2>Spielwiese: Text/Braille platzieren</h2> -->
+    <shape-playground></shape-playground>
   </body>
 </html>
