@@ -57,6 +57,7 @@ export class FlatbuttonViewer extends LitElement {
 
   firstUpdated() {
     const container = this.containerRef.value;
+
     if (!container) return;
 
     this.setupScene(container);
@@ -68,6 +69,7 @@ export class FlatbuttonViewer extends LitElement {
 
   private onResize = (entries: ResizeObserverEntry[]) => {
     const { width, height } = entries[0].contentRect;
+
     this.resizeRenderer(width, height);
   };
 
@@ -76,12 +78,14 @@ export class FlatbuttonViewer extends LitElement {
 
     const result = stlExporter.parse(this.square, { binary: true });
     const blob = new Blob([result], { type: 'application/octet-stream' });
+
     this.downloadBlob(blob, 'flatbutton.stl');
   };
 
   private downloadBlob(blob: Blob, filename: string) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
+
     link.href = url;
     link.download = filename;
     link.click();
@@ -120,6 +124,7 @@ export class FlatbuttonViewer extends LitElement {
 
   private createControls(camera: PerspectiveCamera, renderer: WebGLRenderer) {
     const controls = new OrbitControls(camera, renderer.domElement);
+
     controls.addEventListener('change', () => {
       if (!this.renderer || !this.scene || !this.camera) return;
 
@@ -131,6 +136,7 @@ export class FlatbuttonViewer extends LitElement {
 
   private createRenderer(width: number, height: number) {
     const renderer = new WebGLRenderer({ antialias: true });
+
     renderer.setSize(width, height, false);
 
     return renderer;
@@ -138,6 +144,7 @@ export class FlatbuttonViewer extends LitElement {
 
   private createCamera(width: number, height: number) {
     const camera = new PerspectiveCamera(30, width / height, 0.1, 1000);
+
     camera.position.z = 60;
 
     return camera;
@@ -145,6 +152,7 @@ export class FlatbuttonViewer extends LitElement {
 
   private createScene() {
     const scene = new Scene();
+
     scene.background = new Color(sceneBackgroundColor);
 
     return scene;
@@ -152,10 +160,12 @@ export class FlatbuttonViewer extends LitElement {
 
   private createSquare() {
     const geometry = createButtonGeometry(defaultButtonParams);
+
     this.material = new MeshBasicMaterial({ color: defaultButtonParams.color });
 
     const square = new Mesh(geometry, this.material);
     const { x, y, z } = getCenteredPosition(defaultButtonParams);
+
     square.position.set(x, y, z);
 
     return square;
@@ -176,6 +186,7 @@ export class FlatbuttonViewer extends LitElement {
     this.material.color.set(params.color);
 
     const { x, y, z } = getCenteredPosition(params);
+
     this.square.position.set(x, y, z);
 
     this.renderer.render(this.scene, this.camera);

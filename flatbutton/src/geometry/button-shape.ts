@@ -14,6 +14,7 @@ import type {
 } from '../interfaces/button-params.js';
 
 const minBorderWidth = 2;
+
 export const captionWidth = 8;
 
 const getCaptionOffset = (captionPosition: CaptionPosition): number => {
@@ -22,6 +23,7 @@ const getCaptionOffset = (captionPosition: CaptionPosition): number => {
 
 export const createRectShape = (width: number, height: number): Shape => {
   const shape = new Shape();
+
   shape.moveTo(0, 0);
   shape.lineTo(width, 0);
   shape.lineTo(width, height);
@@ -42,6 +44,7 @@ export const createHolePath = (
   const y = (innerHeight - holeHeight) / 2;
 
   const path = new Path();
+
   path.moveTo(x, y);
   path.lineTo(x + holeWidth, y);
   path.lineTo(x + holeWidth, y + holeHeight);
