@@ -35,8 +35,8 @@ export const defaultButtonParams: ButtonParams = {
   innerWidth: 20,
   innerHeight: 14,
   holeWidth: 10,
-  holeHeight: 8,
+  holeHeight: 10,
   color: '#00ffff',
-  thickness: 0.5,
+  thickness: 2,
   captionPosition: 'none',
 };
