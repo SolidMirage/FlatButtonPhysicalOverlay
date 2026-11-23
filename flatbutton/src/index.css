@@ -50,7 +50,7 @@ flatbutton-viewer:not(:defined) {
 
 edit-panel:not(:defined) {
   display: block;
-  width: 300px;
+  width: 340px;
   min-height: 340px;
 }
 
