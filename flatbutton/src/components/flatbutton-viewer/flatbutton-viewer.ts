@@ -1,5 +1,5 @@
 import { html, LitElement } from 'lit';
-import { customElement } from 'lit/decorators.js';
+import { customElement, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import {
   Color,
@@ -29,6 +29,12 @@ const stlExporter = new STLExporter();
 @customElement('flatbutton-viewer')
 export class FlatbuttonViewer extends LitElement {
   static styles = styles;
+
+  @state()
+  innerWidth = defaultButtonParams.innerWidth;
+
+  @state()
+  innerHeight = defaultButtonParams.innerHeight;
 
   private containerRef = createRef<HTMLDivElement>();
   private renderer?: WebGLRenderer;
@@ -64,6 +70,8 @@ export class FlatbuttonViewer extends LitElement {
   }
 
   private onParamsChanged = (e: ParamsChangedEvent) => {
+    this.innerWidth = e.params.innerWidth;
+    this.innerHeight = e.params.innerHeight;
     this.updateSquare(e.params);
   };
 
@@ -193,7 +201,11 @@ export class FlatbuttonViewer extends LitElement {
   }
 
   render() {
-    return html`<div class="viewer" ${ref(this.containerRef)}></div>`;
+    return html`
+      <div class="viewer" ${ref(this.containerRef)}>
+        <span>${this.innerWidth} x ${this.innerHeight}</span>
+      </div>
+    `;
   }
 }
 
