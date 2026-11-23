@@ -13,7 +13,7 @@ import type {
   CaptionPosition,
 } from '../interfaces/button-params.js';
 
-const minBorderWidth = 2;
+export const minBorderWidth = 2;
 
 export const captionWidth = 8;
 
