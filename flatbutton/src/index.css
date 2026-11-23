@@ -26,7 +26,6 @@ body {
   gap: 1rem;
   box-sizing: border-box;
   height: 100%;
-  padding: 1rem;
 }
 
 /* Der Viewer nimmt allen übrigen Platz, die Seitenleiste nur so viel, wie ihr Inhalt braucht */
@@ -59,4 +58,14 @@ export-panel:not(:defined) {
   display: block;
   width: 300px;
   height: 44px;
+}
+
+h1,
+h2 {
+  margin: 0;
+}
+
+header {
+  padding-inline: 1rem;
+  padding-block: 0.5rem;
 }
